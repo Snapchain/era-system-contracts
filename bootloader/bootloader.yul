@@ -542,7 +542,21 @@ object "Bootloader" {
                     debugLog("currentExpectedTxOffset", currentExpectedTxOffset)
                     debugLog("txDataOffset", txDataOffset)
 
-                    assertionError("Tx data offset is incorrect")
+                    let errMsgStart := mload(0x40)
+                    let expectedOffset := mload(currentExpectedTxOffset)
+                    let actualOffset := mload(add(txDataOffset, 32))
+
+                    // Store the expected and actual offsets in memory
+                    mstore(errMsgStart, expectedOffset)
+                    mstore(add(errMsgStart, 32), "|")
+                    mstore(add(errMsgStart, 33), actualOffset)
+
+                    // Prepend the concatenated string with its length
+                    let errMsgLen := add(65, 32)
+                    mstore(sub(errMsgStart, 32), errMsgLen)
+
+                    // Call the assertionError function with the concatenated string as an argument
+                    assertionError(errMsgStart)
                 }
 
                 currentExpectedTxOffset := validateAbiEncoding(txDataOffset)
